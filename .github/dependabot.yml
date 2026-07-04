@@ -1,0 +1,28 @@
+version: 2
+
+# Note: the git submodule ecosystem is intentionally NOT enabled. vendor/tws-api is a
+# private, deliberately pinned IBKR repo; Dependabot must not bump it.
+
+updates:
+  # NuGet packages across src/TwsApi and src/Tests (.csproj).
+  - package-ecosystem: nuget
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      nuget-minor-and-patch:
+        update-types:
+          - minor
+          - patch
+
+  # GitHub Actions versions used in .github/workflows.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    groups:
+      actions-minor-and-patch:
+        update-types:
+          - minor
+          - patch
