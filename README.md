@@ -143,8 +143,14 @@ The `.github/workflows/publish-nuget.yml` action packs `src/TwsApi` and pushes i
 package version comes from the release tag (`v1.2.0` -> `1.2.0`). The package bundles the vendored
 `CSharpAPI.dll` and declares `Google.Protobuf` + `Microsoft.Extensions.*` as dependencies.
 
-One-time setup: add a repository secret `NUGET_API_KEY` (an api.nuget.org push key). Then create a
-release tagged e.g. `v0.1.0` to publish.
+Auth uses **NuGet trusted publishing** (OIDC) - there is no long-lived API key secret. One-time
+setup on nuget.org: **Account -> Trusted Publishing -> Add**, with
+- Package owner: your nuget.org account
+- Repository owner: `UtopleMan`, Repository: `tws-api-dotnet`
+- Workflow file: `publish-nuget.yml`
+
+Set the `user:` input in the workflow to your nuget.org username. Then create a release tagged
+e.g. `v0.1.0` to publish.
 
 > Note: the package embeds Interactive Brokers' compiled `CSharpAPI.dll`. Redistributing it is
 > subject to the IB API license terms (see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)).

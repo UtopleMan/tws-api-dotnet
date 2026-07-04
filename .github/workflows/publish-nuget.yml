@@ -4,7 +4,10 @@ name: Publish to NuGet
 # The package version is taken from the release tag (a leading "v" is stripped,
 # so tag v1.2.0 -> package 1.2.0).
 #
-# Requires a repository secret NUGET_API_KEY (an api.nuget.org push API key).
+# Auth uses NuGet trusted publishing (OIDC) - no long-lived API key secret.
+# Prerequisite: create a trusted publishing policy on nuget.org (Account ->
+# Trusted Publishing) for owner "UtopleMan", repo "tws-api-dotnet", workflow
+# "publish-nuget.yml".
 
 on:
   release:
@@ -12,6 +15,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write   # required for NuGet trusted publishing (OIDC token exchange)
 
 jobs:
   publish:
@@ -27,6 +31,12 @@ jobs:
         with:
           global-json-file: global.json
 
+      - name: Authenticate to NuGet (trusted publishing)
+        id: login
+        uses: NuGet/login@v1
+        with:
+          user: UtopleMan   # your nuget.org account username (owns the trusted-publishing policy)
+
       - name: Derive version from release tag
         id: version
         run: |
@@ -41,10 +51,8 @@ jobs:
           --output artifacts
 
       - name: Push to NuGet
-        env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
         run: >
           dotnet nuget push "artifacts/*.nupkg"
-          --api-key "$NUGET_API_KEY"
+          --api-key ${{ steps.login.outputs.NUGET_API_KEY }}
           --source https://api.nuget.org/v3/index.json
           --skip-duplicate
