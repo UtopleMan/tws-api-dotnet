@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <RootNamespace>TwsApi.Tests</RootNamespace>
+    <!-- The vendored IBApi has no XML docs; don't require them here. -->
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- User-secrets id so `dotnet user-secrets set TWS_USERID ...` works from this project. -->
+    <UserSecretsId>twsapi-tests-ib-paper</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageReference Include="Xunit.SkippableFact" Version="1.5.23" />
+    <PackageReference Include="FluentAssertions" Version="6.12.2" />
+    <PackageReference Include="Testcontainers" Version="4.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TwsApi\TwsApi.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,31 @@
+# Standalone IB Gateway for manual/dev use against the PAPER account.
+#
+#   1. cp .env.example .env   and fill in TWS_USERID / TWS_PASSWORD
+#   2. docker compose up -d
+#   3. API is exposed on 127.0.0.1:4002 (paper). Optional VNC on 127.0.0.1:5900.
+#
+# The integration test suite (src/Tests) does NOT use this file — it launches its own
+# throwaway container via TestContainers. This compose file is for interactive use.
+#
+# Image: gnzsnz/ib-gateway — the actively maintained community image with headless
+# auto-login (IBC). Using the newest "latest" tag as of 2026-07; bump as needed.
+# https://github.com/gnzsnz/ib-gateway-docker
+services:
+  ib-gateway:
+    image: ghcr.io/gnzsnz/ib-gateway:10.48.1d
+    container_name: ib-gateway-paper
+    restart: unless-stopped
+    environment:
+      TWS_USERID: ${TWS_USERID}
+      TWS_PASSWORD: ${TWS_PASSWORD}
+      TRADING_MODE: paper
+      READ_ONLY_API: ${READ_ONLY_API:-no}
+      # Exit (rather than hang) if 2FA is required — headless login needs 2FA disabled.
+      TWOFA_TIMEOUT_ACTION: exit
+      TIME_ZONE: ${TIME_ZONE:-Etc/UTC}
+      # Set a VNC password to enable the GUI on :5900 for debugging the login.
+      VNC_SERVER_PASSWORD: ${VNC_SERVER_PASSWORD:-}
+    ports:
+      # host:container — container exposes 4004 for paper, 4003 for live.
+      - "127.0.0.1:4002:4004"   # paper trading API
+      - "127.0.0.1:5900:5900"   # VNC (only serves when VNC_SERVER_PASSWORD is set)

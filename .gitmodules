@@ -1,0 +1,3 @@
+[submodule "vendor/tws-api"]
+	path = vendor/tws-api
+	url = https://github.com/InteractiveBrokers/tws-api

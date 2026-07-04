@@ -1,0 +1,24 @@
+<Project>
+
+  <!--
+    Shared build settings for the modern TwsApi projects (src/TwsApi, src/Tests).
+
+    NOTE: this file deliberately lives at the repository root but must NOT leak its
+    settings into the vendored IBKR client under vendor/tws-api (a git submodule). That
+    project multi-targets old frameworks and sets TreatWarningsAsErrors for some of them, so
+    we scope our opinionated settings to our own projects by excluding any project whose
+    directory sits under vendor. (Path-based so it resolves at import time, before
+    the importing .csproj body runs.)
+  -->
+  <PropertyGroup Condition="!$(MSBuildProjectDirectory.Contains('vendor'))">
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Vendored IBApi is not XML-documented; don't warn about missing docs on public API surface. -->
+    <NoWarn>$(NoWarn);CS1591;CS1573</NoWarn>
+  </PropertyGroup>
+
+</Project>

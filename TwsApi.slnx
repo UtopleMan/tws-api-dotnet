@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/Items/">
+    <File Path="docker-compose.yml" />
+  </Folder>
+    <Project Path="src/TwsApi/TwsApi.csproj" />
+    <Project Path="src/Tests/TwsApi.Tests.csproj" />
+</Solution>

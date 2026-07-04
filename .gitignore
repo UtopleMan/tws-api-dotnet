@@ -1,0 +1,27 @@
+# Build output
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+
+# .NET / test
+*.user
+TestResults/
+*.trx
+coverage*.json
+coverage*.xml
+.vs/
+
+# Rider / VS Code
+.idea/
+.vscode/
+
+# Secrets & local env — never commit real IBKR credentials
+.env
+*.env
+!/.env.example
+secrets.json
+
+# OS
+.DS_Store

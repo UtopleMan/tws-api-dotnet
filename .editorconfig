@@ -1,0 +1,25 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+
+[*.{cs,csx}]
+indent_size = 4
+# Prefer file-scoped namespaces, var, and modern C# idioms.
+csharp_style_namespace_declarations = file_scoped:suggestion
+csharp_prefer_braces = true:suggestion
+dotnet_sort_system_directives_first = true
+
+[*.{csproj,props,targets}]
+indent_size = 2
+
+[*.{json,yml,yaml}]
+indent_size = 2
+
+# Don't impose our style on the vendored IBKR client.
+[vendor/**]
+generated_code = true
