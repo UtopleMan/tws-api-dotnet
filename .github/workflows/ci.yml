@@ -21,6 +21,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+          # The vendored IBKR repo (InteractiveBrokers/tws-api) is PRIVATE. The default
+          # GITHUB_TOKEN can't read it, so provide a PAT (secret SUBMODULE_PAT) that belongs
+          # to an account with pull access. Falls back to the default token when unset.
+          token: ${{ secrets.SUBMODULE_PAT || github.token }}
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
