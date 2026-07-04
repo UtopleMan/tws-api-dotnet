@@ -238,6 +238,52 @@ public sealed class TwsClient : ITwsClient
         }
     }
 
+    /// <summary>
+    /// Executions (fills) for the current session. Backed by <c>reqExecutions</c> →
+    /// <c>execDetails*</c> → <c>execDetailsEnd</c>; each fill is joined with its
+    /// <c>commissionAndFeesReport</c> (correlated by <c>ExecId</c>) when one has arrived.
+    /// </summary>
+    /// <param name="filter">Narrows the results; <c>null</c> requests all executions.</param>
+    public Task<IReadOnlyList<ExecutionInfo>> GetExecutionsAsync(
+        ExecutionFilter? filter = null,
+        CancellationToken cancellationToken = default)
+    {
+        var reqId = _ids.Next();
+        var fills = new List<(Contract Contract, Execution Execution)>();
+        var commissions = new Dictionary<string, CommissionAndFeesReport>(StringComparer.Ordinal);
+        var tcs = NewTcs<IReadOnlyList<ExecutionInfo>>();
+
+        void OnExec(int id, Contract contract, Execution execution) { if (id == reqId) fills.Add((contract, execution)); }
+        void OnCommission(CommissionAndFeesReport report) => commissions[report.ExecId] = report;
+        void OnEnd(int id)
+        {
+            if (id != reqId) return;
+            var result = fills
+                .Select(f => new ExecutionInfo(
+                    f.Contract, f.Execution,
+                    commissions.TryGetValue(f.Execution.ExecId, out var report) ? report : null))
+                .ToList();
+            tcs.TrySetResult(result);
+        }
+
+        return RunRequestAsync(
+            reqId, tcs,
+            subscribe: () =>
+            {
+                _dispatcher.ExecDetailsReceived += OnExec;
+                _dispatcher.ExecDetailsEndReceived += OnEnd;
+                _dispatcher.CommissionAndFeesReportReceived += OnCommission;
+            },
+            unsubscribe: () =>
+            {
+                _dispatcher.ExecDetailsReceived -= OnExec;
+                _dispatcher.ExecDetailsEndReceived -= OnEnd;
+                _dispatcher.CommissionAndFeesReportReceived -= OnCommission;
+            },
+            invokeRequest: () => Socket.reqExecutions(reqId, filter ?? new ExecutionFilter()),
+            cancellationToken);
+    }
+
     // ============================ Orders ============================
 
     /// <summary>
@@ -406,9 +452,71 @@ public sealed class TwsClient : ITwsClient
             cancellationToken);
     }
 
+    /// <summary>
+    /// Subscribe to account-level P/L. Backed by <c>reqPnL</c>; cancelled (<c>cancelPnL</c>)
+    /// when the enumeration ends.
+    /// </summary>
+    public IAsyncEnumerable<AccountPnl> SubscribeAccountPnlAsync(
+        string account,
+        string modelCode = "",
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(account);
+        var reqId = _ids.Next();
+        return StreamAsync<AccountPnl>(
+            reqId,
+            wire: writer =>
+            {
+                void OnPnl(int id, double daily, double unrealized, double realized)
+                {
+                    if (id == reqId)
+                        writer.TryWrite(new AccountPnl(Available(daily), Available(unrealized), Available(realized)));
+                }
+                _dispatcher.PnlReceived += OnPnl;
+                return new ActionDisposable(() => _dispatcher.PnlReceived -= OnPnl);
+            },
+            invokeRequest: () => Socket.reqPnL(reqId, account, modelCode),
+            invokeCancel: () => Socket.cancelPnL(reqId),
+            errorAppliesToStream: true,
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// Subscribe to per-position P/L for a single contract. Backed by <c>reqPnLSingle</c>;
+    /// cancelled (<c>cancelPnLSingle</c>) when the enumeration ends.
+    /// </summary>
+    public IAsyncEnumerable<PositionPnl> SubscribePositionPnlAsync(
+        string account,
+        int contractId,
+        string modelCode = "",
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(account);
+        var reqId = _ids.Next();
+        return StreamAsync<PositionPnl>(
+            reqId,
+            wire: writer =>
+            {
+                void OnPnl(int id, decimal pos, double daily, double unrealized, double realized, double value)
+                {
+                    if (id == reqId)
+                        writer.TryWrite(new PositionPnl(pos, Available(daily), Available(unrealized), Available(realized), value));
+                }
+                _dispatcher.PnlSingleReceived += OnPnl;
+                return new ActionDisposable(() => _dispatcher.PnlSingleReceived -= OnPnl);
+            },
+            invokeRequest: () => Socket.reqPnLSingle(reqId, account, modelCode, contractId),
+            invokeCancel: () => Socket.cancelPnLSingle(reqId),
+            errorAppliesToStream: true,
+            cancellationToken);
+    }
+
     // ============================ Internals ============================
 
     private static TaskCompletionSource<T> NewTcs<T>() => new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    /// <summary>Map the TWS "not yet available" sentinel (<see cref="double.MaxValue"/>) to <c>null</c>.</summary>
+    private static double? Available(double value) => value == double.MaxValue ? null : value;
 
     /// <summary>
     /// Common skeleton for a request that completes a single <see cref="TaskCompletionSource{T}"/>:

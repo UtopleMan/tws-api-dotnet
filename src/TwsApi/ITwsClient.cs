@@ -56,6 +56,15 @@ public interface ITwsClient : IAsyncDisposable
     /// <summary>Snapshot of open orders (<c>reqOpenOrders</c>).</summary>
     Task<IReadOnlyList<OpenOrderInfo>> GetOpenOrdersAsync(CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Executions (fills) for the current session, each joined with its commission report when
+    /// available (<c>reqExecutions</c> → <c>execDetails*</c>/<c>commissionAndFeesReport</c> →
+    /// <c>execDetailsEnd</c>). Pass a filter to narrow by account/time/symbol/side, or omit for all.
+    /// </summary>
+    Task<IReadOnlyList<ExecutionInfo>> GetExecutionsAsync(
+        ExecutionFilter? filter = null,
+        CancellationToken cancellationToken = default);
+
     // ============================ Orders ============================
 
     /// <summary>Place an order and complete on its first acknowledged state.</summary>
@@ -92,4 +101,23 @@ public interface ITwsClient : IAsyncDisposable
 
     /// <summary>Subscribe to a live stream of position updates (<c>reqPositions</c>).</summary>
     IAsyncEnumerable<PositionInfo> SubscribePositionsAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Subscribe to account-level daily/unrealized/realized P/L updates (<c>reqPnL</c>);
+    /// cancelled (<c>cancelPnL</c>) when the enumeration ends.
+    /// </summary>
+    IAsyncEnumerable<AccountPnl> SubscribeAccountPnlAsync(
+        string account,
+        string modelCode = "",
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Subscribe to per-position daily/unrealized/realized P/L updates for a single contract
+    /// (<c>reqPnLSingle</c>); cancelled (<c>cancelPnLSingle</c>) when the enumeration ends.
+    /// </summary>
+    IAsyncEnumerable<PositionPnl> SubscribePositionPnlAsync(
+        string account,
+        int contractId,
+        string modelCode = "",
+        CancellationToken cancellationToken = default);
 }
