@@ -1,5 +1,7 @@
 # TwsApi - modern async/await .NET 10 wrapper for the IB TWS API
 
+[![CI](https://github.com/UtopleMan/tws-api-dotnet/actions/workflows/ci.yml/badge.svg)](https://github.com/UtopleMan/tws-api-dotnet/actions/workflows/ci.yml)
+
 A modern **.NET 10** facade over the Interactive Brokers **TWS API** C# client. It hides the
 legacy callback/threading/request-id model behind idiomatic `async`/`await` and
 `IAsyncEnumerable<T>`.

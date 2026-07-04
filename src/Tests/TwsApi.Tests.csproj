@@ -24,6 +24,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TwsApi\TwsApi.csproj" />
+    <!-- The tests use IBApi types (Contract, Order, ...) directly. TwsApi marks its CSharpAPI
+         reference PrivateAssets="all" (so it isn't a NuGet dependency), so reference it here too. -->
+    <ProjectReference Include="..\..\vendor\tws-api\source\csharpclient\client\CSharpAPI.csproj" />
   </ItemGroup>
 
 </Project>

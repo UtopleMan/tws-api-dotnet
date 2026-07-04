@@ -1,0 +1,44 @@
+name: CI
+
+# Build + test on every push to main and every pull request.
+# Unit tests always run; the gateway integration tests self-skip when no IBKR
+# credentials are present (see IbGatewayFixture), so no Docker/gateway is needed here.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (with the vendored IBKR submodule)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Restore
+        run: dotnet restore TwsApi.slnx
+
+      - name: Build
+        run: dotnet build TwsApi.slnx --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test TwsApi.slnx --configuration Release --no-build --verbosity normal
