@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout (with the vendored IBKR submodule)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           submodules: recursive
           # The vendored IBKR repo (InteractiveBrokers/tws-api) is PRIVATE. The default
