@@ -4,7 +4,7 @@ This project (the modern async wrapper under `src/`) is licensed under the MIT L
 (see [LICENSE](LICENSE)). It builds on top of the following third-party components, each
 under its own license. The MIT license of this project does **not** relicense any of them.
 
-## Interactive Brokers TWS API — NOT open source
+## Interactive Brokers TWS API - NOT open source
 
 - **Component:** Interactive Brokers TWS API (C# client), included as a git submodule at
   `vendor/tws-api` (upstream: https://github.com/InteractiveBrokers/tws-api).
@@ -12,7 +12,7 @@ under its own license. The MIT license of this project does **not** relicense an
 - **License:** *IB API Non-Commercial License* or *IB API Commercial License*, as applicable
   (see the copyright header in each IBKR source file).
 
-**Important:** This wrapper does not redistribute the IBKR API — it is fetched from
+**Important:** This wrapper does not redistribute the IBKR API - it is fetched from
 Interactive Brokers as a submodule. Your use of the IBKR API is governed by Interactive
 Brokers' license terms, **not** by this project's MIT license. In particular, the default
 IB API license is **non-commercial**; obtaining commercial rights to the IBKR API is a matter

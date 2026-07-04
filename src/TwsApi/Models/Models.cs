@@ -28,7 +28,7 @@ public sealed record RealtimeBar(
     decimal Wap,
     int Count);
 
-/// <summary>Result of placing an order — the first acknowledged state from TWS.</summary>
+/// <summary>Result of placing an order - the first acknowledged state from TWS.</summary>
 public sealed record OrderPlacement(
     int OrderId,
     long PermId,

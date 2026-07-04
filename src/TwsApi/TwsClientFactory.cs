@@ -3,7 +3,7 @@ using Microsoft.Extensions.Options;
 namespace TwsApi;
 
 /// <summary>
-/// Default <see cref="ITwsClientFactory"/> — delegates to <see cref="TwsClient.ConnectAsync"/>
+/// Default <see cref="ITwsClientFactory"/> - delegates to <see cref="TwsClient.ConnectAsync"/>
 /// and applies the <see cref="TwsConnectionOptions"/> supplied through DI (default or named)
 /// or directly.
 /// </summary>
@@ -13,7 +13,7 @@ public sealed class TwsClientFactory : ITwsClientFactory
     // non-DI convenience ctor returns a single fixed set regardless of name.
     private readonly Func<string, TwsConnectionOptions> _resolve;
 
-    /// <summary>DI constructor — resolves default/named options registered by <c>AddTwsApi</c>.</summary>
+    /// <summary>DI constructor - resolves default/named options registered by <c>AddTwsApi</c>.</summary>
     public TwsClientFactory(IOptionsMonitor<TwsConnectionOptions> optionsMonitor)
     {
         ArgumentNullException.ThrowIfNull(optionsMonitor);

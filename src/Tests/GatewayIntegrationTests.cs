@@ -7,7 +7,7 @@ namespace TwsApi.Tests;
 /// Every test skips gracefully when credentials are absent (see <see cref="IbGatewayFixture"/>).
 ///
 /// Assertions target request/response *mechanics* (correlation, streaming, lifecycle), not
-/// specific live prices — paper market data may be delayed or absent without subscriptions.
+/// specific live prices - paper market data may be delayed or absent without subscriptions.
 /// </summary>
 [Collection(GatewayCollection.Name)]
 public sealed class GatewayIntegrationTests(IbGatewayFixture gateway)
@@ -68,7 +68,7 @@ public sealed class GatewayIntegrationTests(IbGatewayFixture gateway)
     {
         gateway.EnsureAvailable();
         await using var client = await gateway.ConnectAsync();
-        client.SetMarketDataType(3); // delayed data — always available on paper
+        client.SetMarketDataType(3); // delayed data - always available on paper
 
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
         MarketDataTick? first = null;

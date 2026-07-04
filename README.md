@@ -1,4 +1,4 @@
-# TwsApi — modern async/await .NET 10 wrapper for the IB TWS API
+# TwsApi - modern async/await .NET 10 wrapper for the IB TWS API
 
 A modern **.NET 10** facade over the Interactive Brokers **TWS API** C# client. It hides the
 legacy callback/threading/request-id model behind idiomatic `async`/`await` and
@@ -29,15 +29,15 @@ await foreach (var tick in tws.SubscribeMarketDataAsync(Contracts.Stock("AAPL"),
 
 ## Design
 
-- **`ITwsClient`** — the public contract `TwsClient` implements. Depend on this interface in
+- **`ITwsClient`** - the public contract `TwsClient` implements. Depend on this interface in
   your own code so the API can be stubbed/mocked in tests.
-- **`TwsClient`** — the public entry point. One-shot calls return `Task<T>`; streaming
+- **`TwsClient`** - the public entry point. One-shot calls return `Task<T>`; streaming
   subscriptions return `IAsyncEnumerable<T>` (backed by `System.Threading.Channels`).
-- **`Internal/TwsEventDispatcher`** — a single `DefaultEWrapper` subclass that re-publishes the
+- **`Internal/TwsEventDispatcher`** - a single `DefaultEWrapper` subclass that re-publishes the
   relevant callbacks as typed .NET events.
-- **`Internal/ConnectionManager`** — encapsulates the socket + `EReader` + processing thread and
+- **`Internal/ConnectionManager`** - encapsulates the socket + `EReader` + processing thread and
   exposes `ConnectAsync` that completes on `nextValidId` (no busy-wait).
-- **`Internal/RequestIdAllocator`** — hands out request/order ids so callers never manage them.
+- **`Internal/RequestIdAllocator`** - hands out request/order ids so callers never manage them.
 
 ## Service collection
 
@@ -68,16 +68,16 @@ public sealed class Quotes(ITwsClientFactory factory)
 }
 ```
 
-- `factory.ConnectAsync(ct)` — connect with the configured (default) options.
-- `factory.ConnectAsync(options, ct)` — override the options per call (e.g. a different `ClientId`).
+- `factory.ConnectAsync(ct)` - connect with the configured (default) options.
+- `factory.ConnectAsync(options, ct)` - override the options per call (e.g. a different `ClientId`).
 - Depend on `ITwsClientFactory` / `ITwsClient`, not the concrete types, so both creation and use
   are mockable in tests. The static `TwsClient.ConnectAsync(options)` remains for scripts and
   non-DI use.
 
 ## Running multiple connections
 
-Every `ITwsClient` is a fully independent connection — its own socket, background reader thread and
-request-id sequence — with no shared or static state. Several can stay live at the same time, each
+Every `ITwsClient` is a fully independent connection - its own socket, background reader thread and
+request-id sequence - with no shared or static state. Several can stay live at the same time, each
 pointed at a different IB gateway (different port / login).
 
 Register one **named** configuration per gateway and resolve it by name:
@@ -103,7 +103,7 @@ await using var b = await TwsClient.ConnectAsync(new() { Port = 4004, ClientId =
 Two rules from the IB side:
 
 - **Each gateway is a separate login/account.** Connecting to several gateways means several
-  sessions — one login can't be shared across gateways.
+  sessions - one login can't be shared across gateways.
 - **`ClientId` is namespaced per gateway.** Reusing `1` across *different* gateways is fine; two
   connections to the *same* gateway must use distinct client ids.
 
@@ -133,7 +133,7 @@ dotnet test
 ```
 
 With credentials + Docker present, TestContainers pulls `ghcr.io/gnzsnz/ib-gateway`, waits for
-the API to become ready (auto-login can take 30–90s), runs the suite, and tears the container
+the API to become ready (auto-login can take 30-90s), runs the suite, and tears the container
 down automatically.
 
 ## License
@@ -143,7 +143,7 @@ The wrapper code in this repository (the `src/` tree) is licensed under the
 
 **The IBKR TWS API is not covered by that license.** It is included as a git submodule under
 `vendor/tws-api` and remains © Interactive Brokers LLC under the *IB API Non-Commercial / Commercial
-License*. This project does not redistribute it and grants you no rights to it — your use of the
+License*. This project does not redistribute it and grants you no rights to it - your use of the
 IBKR API is governed by Interactive Brokers' own terms (the default is **non-commercial**). See
 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) for the full dependency breakdown (also
 Google.Protobuf, BSD-3-Clause; Microsoft.Extensions.*, MIT).

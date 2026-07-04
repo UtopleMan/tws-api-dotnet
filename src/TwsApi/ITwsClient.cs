@@ -3,7 +3,7 @@ using IBApi;
 namespace TwsApi;
 
 /// <summary>
-/// The public contract of the TWS API facade — the async/await + <see cref="IAsyncEnumerable{T}"/>
+/// The public contract of the TWS API facade - the async/await + <see cref="IAsyncEnumerable{T}"/>
 /// surface implemented by <see cref="TwsClient"/>.
 ///
 /// Depend on this interface (rather than the concrete <see cref="TwsClient"/>) in downstream code

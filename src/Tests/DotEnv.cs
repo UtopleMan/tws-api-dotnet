@@ -4,7 +4,7 @@ namespace TwsApi.Tests;
 
 /// <summary>
 /// Minimal <c>.env</c> reader so the repo-root <c>.env</c> (the file you fill in from
-/// <c>.env.example</c>) feeds the integration-test configuration — the same file
+/// <c>.env.example</c>) feeds the integration-test configuration - the same file
 /// <c>docker compose</c> reads. This lets a plain <c>dotnet test</c> pick up the
 /// TWS_USERID / TWS_PASSWORD you put in <c>.env</c> without also exporting them as
 /// environment variables or setting user-secrets.

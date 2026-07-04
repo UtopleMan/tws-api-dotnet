@@ -28,10 +28,10 @@ public sealed class UnitTests
     }
 
     [Theory]
-    [InlineData(2104, true)]  // market data farm connected — informational
-    [InlineData(2106, true)]  // hmds data farm connected — informational
-    [InlineData(200, false)]  // no security definition — a real error
-    [InlineData(201, false)]  // order rejected — a real error
+    [InlineData(2104, true)]  // market data farm connected - informational
+    [InlineData(2106, true)]  // hmds data farm connected - informational
+    [InlineData(200, false)]  // no security definition - a real error
+    [InlineData(201, false)]  // order rejected - a real error
     public void TwsException_IsInformational_classifies_codes(int code, bool expected)
     {
         TwsException.IsInformational(code).Should().Be(expected);
