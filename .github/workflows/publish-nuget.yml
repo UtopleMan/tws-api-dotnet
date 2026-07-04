@@ -1,0 +1,50 @@
+name: Publish to NuGet
+
+# Publishes the TwsApi package when a GitHub Release is published.
+# The package version is taken from the release tag (a leading "v" is stripped,
+# so tag v1.2.0 -> package 1.2.0).
+#
+# Requires a repository secret NUGET_API_KEY (an api.nuget.org push API key).
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (with the vendored IBKR submodule)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Derive version from release tag
+        id: version
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          echo "value=${TAG#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Pack
+        run: >
+          dotnet pack src/TwsApi/TwsApi.csproj
+          --configuration Release
+          -p:Version=${{ steps.version.outputs.value }}
+          --output artifacts
+
+      - name: Push to NuGet
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: >
+          dotnet nuget push "artifacts/*.nupkg"
+          --api-key "$NUGET_API_KEY"
+          --source https://api.nuget.org/v3/index.json
+          --skip-duplicate

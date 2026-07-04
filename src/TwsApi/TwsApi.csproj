@@ -5,9 +5,17 @@
     <AssemblyName>TwsApi</AssemblyName>
     <Description>Modern async/await + IAsyncEnumerable facade over the Interactive Brokers TWS API C# client.</Description>
     <Authors>UtopleMan</Authors>
+    <PackageId>TwsApi</PackageId>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>interactive-brokers;ibkr;tws;trading;async;iasyncenumerable</PackageTags>
     <RepositoryUrl>https://github.com/UtopleMan/tws-api-dotnet</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
     <PackageProjectUrl>https://github.com/UtopleMan/tws-api-dotnet</PackageProjectUrl>
+
+    <!-- The vendored IBKR client is not a NuGet package, so bundle its assembly (CSharpAPI.dll)
+         into this package's lib folder (see IncludeVendoredIbApi target below). -->
+    <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);IncludeVendoredIbApi</TargetsForTfmSpecificBuildOutput>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,14 +23,32 @@
          DependencyInjection.Abstractions (IServiceCollection, AddSingleton). -->
     <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />
+    <!-- CSharpAPI.dll (bundled below) depends on Google.Protobuf. Declare it explicitly so it
+         flows to consumers as a package dependency, since the CSharpAPI project reference itself
+         is private (PrivateAssets="all") and contributes no NuGet dependency. -->
+    <PackageReference Include="Google.Protobuf" Version="3.29.5" />
   </ItemGroup>
 
   <ItemGroup>
     <!--
       Wrap the vendored IBKR client. It multi-targets (netstandard2.0;net48;netcoreapp3.1;net8.0)
       and MSBuild picks net8.0 as the nearest-compatible target for our net10.0 assembly.
+      PrivateAssets="all": keep it out of the package's dependency list; its DLL is bundled instead.
     -->
-    <ProjectReference Include="..\..\vendor\tws-api\source\csharpclient\client\CSharpAPI.csproj" />
+    <ProjectReference Include="..\..\vendor\tws-api\source\csharpclient\client\CSharpAPI.csproj"
+                      PrivateAssets="all" />
   </ItemGroup>
+
+  <ItemGroup>
+    <!-- Ship the repo README as the package readme shown on nuget.org. -->
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <!-- Place the vendored IBKR assembly alongside TwsApi.dll in lib/<tfm>/. -->
+  <Target Name="IncludeVendoredIbApi">
+    <ItemGroup>
+      <BuildOutputInPackage Include="$(OutputPath)CSharpAPI.dll" />
+    </ItemGroup>
+  </Target>
 
 </Project>

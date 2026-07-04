@@ -136,6 +136,19 @@ With credentials + Docker present, TestContainers pulls `ghcr.io/gnzsnz/ib-gatew
 the API to become ready (auto-login can take 30-90s), runs the suite, and tears the container
 down automatically.
 
+## Publishing
+
+The `.github/workflows/publish-nuget.yml` action packs `src/TwsApi` and pushes it to
+[nuget.org](https://www.nuget.org) as `TwsApi` whenever a GitHub **Release** is published. The
+package version comes from the release tag (`v1.2.0` -> `1.2.0`). The package bundles the vendored
+`CSharpAPI.dll` and declares `Google.Protobuf` + `Microsoft.Extensions.*` as dependencies.
+
+One-time setup: add a repository secret `NUGET_API_KEY` (an api.nuget.org push key). Then create a
+release tagged e.g. `v0.1.0` to publish.
+
+> Note: the package embeds Interactive Brokers' compiled `CSharpAPI.dll`. Redistributing it is
+> subject to the IB API license terms (see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)).
+
 ## License
 
 The wrapper code in this repository (the `src/` tree) is licensed under the
