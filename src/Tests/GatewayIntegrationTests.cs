@@ -107,6 +107,69 @@ public sealed class GatewayIntegrationTests(IbGatewayFixture gateway)
     }
 
     [SkippableFact]
+    public async Task GetExecutionsAsync_returns_without_error()
+    {
+        gateway.EnsureAvailable();
+        await using var client = await gateway.ConnectAsync();
+
+        // A fresh paper account may have no fills today; asserting the request completes
+        // (terminated by execDetailsEnd) is the meaningful check, as with GetPositionsAsync.
+        var executions = await client.GetExecutionsAsync();
+
+        executions.Should().NotBeNull();
+        // When fills do exist, each carries a resolved contract.
+        executions.Should().OnlyContain(e => e.Contract != null && e.Execution != null);
+    }
+
+    [SkippableFact]
+    public async Task SubscribeAccountPnlAsync_yields_at_least_one_update()
+    {
+        gateway.EnsureAvailable();
+        await using var client = await gateway.ConnectAsync();
+        var account = PrimaryAccount(client);
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        AccountPnl? first = null;
+        await foreach (var pnl in client.SubscribeAccountPnlAsync(account, cancellationToken: cts.Token))
+        {
+            first = pnl;
+            break; // enumeration dispose triggers cancelPnL
+        }
+
+        first.Should().NotBeNull("reqPnL should emit at least one account P/L update within the timeout");
+    }
+
+    [SkippableFact]
+    public async Task SubscribePositionPnlAsync_yields_at_least_one_update()
+    {
+        gateway.EnsureAvailable();
+        await using var client = await gateway.ConnectAsync();
+        var account = PrimaryAccount(client);
+
+        // reqPnLSingle needs a conId; resolve a known stock. It streams updates even when the
+        // account holds no position in it (reporting position 0).
+        var details = await client.ResolveContractAsync(Contracts.Stock("AAPL"));
+        var conId = details[0].Contract.ConId;
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        PositionPnl? first = null;
+        await foreach (var pnl in client.SubscribePositionPnlAsync(account, conId, cancellationToken: cts.Token))
+        {
+            first = pnl;
+            break; // enumeration dispose triggers cancelPnLSingle
+        }
+
+        first.Should().NotBeNull("reqPnLSingle should emit at least one per-position P/L update within the timeout");
+    }
+
+    /// <summary>First account from the login's managed-accounts list (reqPnL needs a concrete account).</summary>
+    private static string PrimaryAccount(ITwsClient client)
+    {
+        client.ManagedAccounts.Should().NotBeNullOrWhiteSpace();
+        return client.ManagedAccounts!.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)[0];
+    }
+
+    [SkippableFact]
     public async Task PlaceOrderAsync_then_CancelOrder_completes_lifecycle()
     {
         gateway.EnsureAvailable();

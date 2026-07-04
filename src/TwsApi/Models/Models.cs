@@ -71,3 +71,35 @@ public sealed record OpenOrderInfo(
     Contract Contract,
     Order Order,
     OrderState OrderState);
+
+/// <summary>
+/// A single execution (fill) from <c>reqExecutions</c> → <c>execDetails</c>, joined with its
+/// <c>commissionAndFeesReport</c> when one has arrived. <see cref="CommissionAndFees"/> is
+/// <c>null</c> if the matching commission report (correlated by <see cref="Execution.ExecId"/>)
+/// had not been received by the time <c>execDetailsEnd</c> completed the request.
+/// </summary>
+public sealed record ExecutionInfo(
+    Contract Contract,
+    Execution Execution,
+    CommissionAndFeesReport? CommissionAndFees);
+
+/// <summary>
+/// Account-level P/L from <c>reqPnL</c> → <c>pnl</c>. Fields are <c>null</c> until TWS has a
+/// value to report (the wire carries <see cref="double.MaxValue"/> as "not yet available").
+/// </summary>
+public sealed record AccountPnl(
+    double? DailyPnL,
+    double? UnrealizedPnL,
+    double? RealizedPnL);
+
+/// <summary>
+/// Per-position P/L from <c>reqPnLSingle</c> → <c>pnlSingle</c>. The P/L fields are <c>null</c>
+/// until available (see <see cref="AccountPnl"/>); <see cref="Position"/> and
+/// <see cref="MarketValue"/> are always reported.
+/// </summary>
+public sealed record PositionPnl(
+    decimal Position,
+    double? DailyPnL,
+    double? UnrealizedPnL,
+    double? RealizedPnL,
+    double MarketValue);

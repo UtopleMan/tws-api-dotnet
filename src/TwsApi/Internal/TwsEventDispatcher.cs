@@ -60,6 +60,18 @@ internal sealed class TwsEventDispatcher : DefaultEWrapper
     public event Action<int, Contract, Order, OrderState>? OpenOrderReceived;
     public event Action? OpenOrderEndReceived;
 
+    // --- Executions -----------------------------------------------------------
+    public event Action<int, Contract, Execution>? ExecDetailsReceived;
+    public event Action<int>? ExecDetailsEndReceived;
+    /// <summary>Not request-id scoped; correlate to an execution by <c>ExecId</c>.</summary>
+    public event Action<CommissionAndFeesReport>? CommissionAndFeesReportReceived;
+
+    // --- P/L ------------------------------------------------------------------
+    /// <summary>(reqId, dailyPnL, unrealizedPnL, realizedPnL)</summary>
+    public event Action<int, double, double, double>? PnlReceived;
+    /// <summary>(reqId, position, dailyPnL, unrealizedPnL, realizedPnL, marketValue)</summary>
+    public event Action<int, decimal, double, double, double, double>? PnlSingleReceived;
+
     // --- EWrapper overrides ---------------------------------------------------
 
     public override void connectAck() => ConnectAckReceived?.Invoke();
@@ -126,4 +138,18 @@ internal sealed class TwsEventDispatcher : DefaultEWrapper
         OpenOrderReceived?.Invoke(orderId, contract, order, orderState);
 
     public override void openOrderEnd() => OpenOrderEndReceived?.Invoke();
+
+    public override void execDetails(int reqId, Contract contract, Execution execution) =>
+        ExecDetailsReceived?.Invoke(reqId, contract, execution);
+
+    public override void execDetailsEnd(int reqId) => ExecDetailsEndReceived?.Invoke(reqId);
+
+    public override void commissionAndFeesReport(CommissionAndFeesReport commissionAndFeesReport) =>
+        CommissionAndFeesReportReceived?.Invoke(commissionAndFeesReport);
+
+    public override void pnl(int reqId, double dailyPnL, double unrealizedPnL, double realizedPnL) =>
+        PnlReceived?.Invoke(reqId, dailyPnL, unrealizedPnL, realizedPnL);
+
+    public override void pnlSingle(int reqId, decimal pos, double dailyPnL, double unrealizedPnL, double realizedPnL, double value) =>
+        PnlSingleReceived?.Invoke(reqId, pos, dailyPnL, unrealizedPnL, realizedPnL, value);
 }

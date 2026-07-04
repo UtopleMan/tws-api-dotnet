@@ -53,20 +53,40 @@ public sealed class IbGatewayFixture : IAsyncLifetime
             return;
         }
 
-        _container = new ContainerBuilder()
-            .WithImage(GatewayImage)
-            .WithEnvironment("TWS_USERID", userId)
-            .WithEnvironment("TWS_PASSWORD", password)
-            .WithEnvironment("TRADING_MODE", "paper")
-            .WithEnvironment("READ_ONLY_API", config["READ_ONLY_API"] ?? "no")
-            .WithEnvironment("TWOFA_TIMEOUT_ACTION", "exit")
-            .WithEnvironment("TIME_ZONE", config["TIME_ZONE"] ?? "Etc/UTC")
-            .WithPortBinding(PaperApiContainerPort, assignRandomHostPort: true)
-            // The API port only starts listening after IBC completes auto-login.
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(PaperApiContainerPort))
-            .Build();
+        try
+        {
+            // Testcontainers validates Docker availability during Build(), so both the build and
+            // the start can fault when the daemon is down.
+            _container = new ContainerBuilder()
+                .WithImage(GatewayImage)
+                .WithEnvironment("TWS_USERID", userId)
+                .WithEnvironment("TWS_PASSWORD", password)
+                .WithEnvironment("TRADING_MODE", "paper")
+                .WithEnvironment("READ_ONLY_API", config["READ_ONLY_API"] ?? "no")
+                .WithEnvironment("TWOFA_TIMEOUT_ACTION", "exit")
+                .WithEnvironment("TIME_ZONE", config["TIME_ZONE"] ?? "Etc/UTC")
+                .WithPortBinding(PaperApiContainerPort, assignRandomHostPort: true)
+                // The API port only starts listening after IBC completes auto-login.
+                .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(PaperApiContainerPort))
+                .Build();
 
-        await _container.StartAsync();
+            await _container.StartAsync();
+        }
+        catch (Exception ex) when (IsDockerUnavailable(ex))
+        {
+            // Credentials are present but the Docker daemon isn't reachable; skip rather than
+            // fail so these tests stay green on machines/CI without Docker.
+            UnavailableReason =
+                $"Docker is not available to start the IB Gateway container ({ex.Message.Split('\n')[0]}). " +
+                "Start Docker to run gateway integration tests.";
+            if (_container is not null)
+            {
+                await _container.DisposeAsync();
+                _container = null;
+            }
+            return;
+        }
+
         MappedApiPort = _container.GetMappedPublicPort(PaperApiContainerPort);
 
         // App-level readiness gate: retry-connect until the API session is genuinely ready
@@ -91,6 +111,31 @@ public sealed class IbGatewayFixture : IAsyncLifetime
     /// <summary>Throw a skip exception when the gateway isn't available.</summary>
     public void EnsureAvailable() =>
         Skip.IfNot(IsAvailable, UnavailableReason ?? "IB Gateway is not available.");
+
+    /// <summary>
+    /// True when <paramref name="ex"/> indicates the Docker daemon is unavailable (not running or
+    /// misconfigured), as opposed to a genuine container/login failure worth surfacing. Testcontainers
+    /// reports this as an <see cref="ArgumentException"/> for <c>DockerEndpointAuthConfig</c> during
+    /// <c>Build()</c>, or as a daemon connectivity error while starting.
+    /// </summary>
+    private static bool IsDockerUnavailable(Exception ex)
+    {
+        for (Exception? e = ex; e is not null; e = e.InnerException)
+        {
+            if (e is ArgumentException { ParamName: "DockerEndpointAuthConfig" })
+            {
+                return true;
+            }
+
+            if (e.Message.Contains("Docker is either not running or misconfigured", StringComparison.OrdinalIgnoreCase)
+                || e.Message.Contains("Cannot connect to the Docker daemon", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     private async Task WaitForApiReadyAsync()
     {
