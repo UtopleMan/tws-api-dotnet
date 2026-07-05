@@ -17,6 +17,9 @@ coverage*.xml
 .idea/
 .vscode/
 
+# Claude Code — local agent settings may contain machine-specific hosts/paths
+.claude/
+
 # Secrets & local env — never commit real IBKR credentials
 .env
 *.env
