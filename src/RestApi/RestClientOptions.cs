@@ -10,21 +10,21 @@ public sealed record RestClientOptions
     /// Base address of the Client Portal Gateway, without the API path. Defaults to the
     /// local gateway on <c>https://localhost:5000</c>.
     /// </summary>
-    public Uri BaseAddress { get; init; } = new("https://localhost:5000");
+    public Uri BaseAddress { get; set; } = new("https://localhost:5000");
 
     /// <summary>
     /// API path prefix appended to <see cref="BaseAddress"/> for every request. The v1 Web
     /// API lives under <c>/v1/api</c>; defaults accordingly.
     /// </summary>
-    public string ApiPath { get; init; } = "/v1/api";
+    public string ApiPath { get; set; } = "/v1/api";
 
     /// <summary>Per-request timeout. Defaults to 30 seconds.</summary>
-    public TimeSpan Timeout { get; init; } = TimeSpan.FromSeconds(30);
+    public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(30);
 
     /// <summary>
     /// When <c>true</c> (the default), the server's TLS certificate is not validated. The
     /// gateway ships with a self-signed certificate, so this is required for the default
     /// localhost setup. Set to <c>false</c> once you install a trusted certificate.
     /// </summary>
-    public bool AcceptAnyServerCertificate { get; init; } = true;
+    public bool AcceptAnyServerCertificate { get; set; } = true;
 }

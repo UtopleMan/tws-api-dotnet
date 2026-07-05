@@ -106,9 +106,12 @@ using IRestClient rest = new RestClient(new RestClientOptions
     // ApiPath = "/v1/api", Timeout = 30s, AcceptAnyServerCertificate = true (defaults)
 });
 
-// Or via DI (adds a pooled, self-signed-tolerant HttpClient):
-services.AddIbkrRestClient(o => o.BaseAddress = new Uri("https://localhost:5000"));
-// then inject IRestClient
+// Or via DI — factory with default + named clients, mirroring AddTwsApi (each gets a pooled,
+// self-signed-tolerant HttpClient):
+services.AddRestApi(o => o.BaseAddress = new Uri("https://localhost:5000"));         // default (unnamed)
+services.AddRestApi("live", o => o.BaseAddress = new Uri("https://localhost:5001")); // named, multi-gateway
+// then: IRestClientFactory.Create()  /  Create("live")
+// (AddIbkrRestClient(...) still registers a single IRestClient directly.)
 ```
 
 `IRestClient` is `IDisposable`. **Auth model:** the gateway holds the session created by the
