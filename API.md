@@ -8,8 +8,8 @@
   CONVENTIONS USED BELOW
   - Every async method takes a trailing `CancellationToken ct = default`. It is omitted
     from the signatures in the tables for brevity; assume it is always present and last.
-  - Namespaces: socket client → `TwsApi`; REST client → `TwsApi.Rest` with one
-    sub-namespace per group (`TwsApi.Rest.Session`, `TwsApi.Rest.Portfolio`, ...).
+  - Namespaces: socket client → `TwsApi`; REST client → `RestApi` with one
+    sub-namespace per group (`RestApi.Session`, `RestApi.Portfolio`, ...).
     REST DTOs live in their group's sub-namespace, so identical short names in different
     groups (e.g. `Position`) never collide.
   - "?" on a return type means the value can be null (empty/`204`/absent body).
@@ -23,7 +23,7 @@ share a session — pick by transport and use case:
 | Client | Interface | Transport | Talks to | Use for |
 |---|---|---|---|---|
 | **Socket client** | `TwsApi.ITwsClient` | TWS binary socket | IB Gateway / TWS (`:4001/:4002/:7496/:7497`) | Live streaming ticks, real-time bars, order placement, P/L subscriptions, historical bars |
-| **REST client** | `TwsApi.Rest.IRestClient` | HTTPS (Client Portal Web API) | Client Portal Gateway (`https://localhost:5000`, the `docker/cpgateway` image) | Everything the CP Web API offers: portfolio analyst, contract search, scanners, alerts, FYI, orders, snapshots |
+| **REST client** | `RestApi.IRestClient` | HTTPS (Client Portal Web API) | Client Portal Gateway (`https://localhost:5000`, the `docker/cpgateway` image) | Everything the CP Web API offers: portfolio analyst, contract search, scanners, alerts, FYI, orders, snapshots |
 
 Rule of thumb: **streaming or lowest-latency trading → socket client; REST/analytics/portal
 features → REST client.** Both can be used together in one app.
@@ -97,7 +97,7 @@ records** (no raw JSON) except a handful of free-form gateway payloads modeled a
 ### Construct
 
 ```csharp
-using TwsApi.Rest;
+using RestApi;
 
 // Owns its HttpClient (handles the gateway's self-signed cert by default):
 using IRestClient rest = new RestClient(new RestClientOptions
@@ -121,17 +121,17 @@ non-success HTTP status throws `RestApiException` (`.StatusCode`, `.Body`, `.IsU
 
 | Property | Interface | Namespace | Endpoints |
 |---|---|---|---|
-| `Session` | `ISessionApi` | `TwsApi.Rest.Session` | 5 |
-| `Account` | `IAccountApi` | `TwsApi.Rest.Account` | 10 |
-| `Contract` | `IContractApi` | `TwsApi.Rest.Contract` | 11 |
-| `MarketData` | `IMarketDataApi` | `TwsApi.Rest.MarketData` | 6 |
-| `Orders` | `IOrdersApi` | `TwsApi.Rest.Orders` | 10 |
-| `Portfolio` | `IPortfolioApi` | `TwsApi.Rest.Portfolio` | 6 |
-| `PortfolioAnalyst` | `IPortfolioAnalystApi` | `TwsApi.Rest.PortfolioAnalyst` | 3 |
-| `Scanner` | `IScannerApi` | `TwsApi.Rest.Scanner` | 3 |
-| `Alerts` | `IAlertsApi` | `TwsApi.Rest.Alerts` | 6 |
-| `Fyi` | `IFyiApi` | `TwsApi.Rest.Fyi` | 12 |
-| `Ccp` | `ICcpApi` | `TwsApi.Rest.Ccp` | 10 (beta) |
+| `Session` | `ISessionApi` | `RestApi.Session` | 5 |
+| `Account` | `IAccountApi` | `RestApi.Account` | 10 |
+| `Contract` | `IContractApi` | `RestApi.Contract` | 11 |
+| `MarketData` | `IMarketDataApi` | `RestApi.MarketData` | 6 |
+| `Orders` | `IOrdersApi` | `RestApi.Orders` | 10 |
+| `Portfolio` | `IPortfolioApi` | `RestApi.Portfolio` | 6 |
+| `PortfolioAnalyst` | `IPortfolioAnalystApi` | `RestApi.PortfolioAnalyst` | 3 |
+| `Scanner` | `IScannerApi` | `RestApi.Scanner` | 3 |
+| `Alerts` | `IAlertsApi` | `RestApi.Alerts` | 6 |
+| `Fyi` | `IFyiApi` | `RestApi.Fyi` | 12 |
+| `Ccp` | `ICcpApi` | `RestApi.Ccp` | 10 (beta) |
 
 Example: `var status = await rest.Session.GetAuthStatusAsync();` /
 `var pos = await rest.Portfolio.GetPositionsAsync("U1234567");`
