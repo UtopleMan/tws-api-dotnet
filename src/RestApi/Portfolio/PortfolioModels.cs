@@ -172,3 +172,25 @@ public sealed record AllocationRequest
     /// <summary>Account ids to include in the consolidated allocation.</summary>
     public IReadOnlyList<string>? AcctIds { get; init; }
 }
+
+/// <summary>Sort order for paged position queries (sent as <c>a</c>/<c>d</c>).</summary>
+public enum SortDirection
+{
+    /// <summary>Ascending (<c>a</c>).</summary>
+    Ascending,
+
+    /// <summary>Descending (<c>d</c>).</summary>
+    Descending,
+}
+
+/// <summary>Wire-value mapping for <see cref="SortDirection"/>.</summary>
+internal static class SortDirectionExtensions
+{
+    /// <summary>The IBKR query value (<c>a</c> or <c>d</c>).</summary>
+    public static string ToApiValue(this SortDirection direction) => direction switch
+    {
+        SortDirection.Ascending => "a",
+        SortDirection.Descending => "d",
+        _ => throw new ArgumentOutOfRangeException(nameof(direction), direction, null),
+    };
+}

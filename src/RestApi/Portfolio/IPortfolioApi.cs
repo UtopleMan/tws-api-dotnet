@@ -27,7 +27,7 @@ public interface IPortfolioApi
     /// <param name="pageId">Zero-based page id.</param>
     /// <param name="model">Optional portfolio model to filter by.</param>
     /// <param name="sort">Column to sort by.</param>
-    /// <param name="direction">Sort order: <c>a</c> ascending, <c>d</c> descending.</param>
+    /// <param name="direction">Sort order — ascending or descending.</param>
     /// <param name="period">Period for the P/L column, e.g. <c>1D</c>, <c>7D</c>, <c>1M</c>.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     Task<IReadOnlyList<Position>?> GetPositionsAsync(
@@ -35,7 +35,7 @@ public interface IPortfolioApi
         int pageId = 0,
         string? model = null,
         string? sort = null,
-        string? direction = null,
+        SortDirection? direction = null,
         string? period = null,
         CancellationToken cancellationToken = default);
 

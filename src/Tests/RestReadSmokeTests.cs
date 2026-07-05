@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Net;
 using FluentAssertions;
 using RestApi;
+using RestApi.Contract;
 using RestApi.Portfolio;
 using RestApi.PortfolioAnalyst;
 using RestApi.Scanner;
@@ -210,7 +211,7 @@ public sealed class RestReadSmokeTests(CpGatewayFixture gateway)
 
             var info = await gateway.Rest.Contract.GetSecDefInfoAsync(
                 option.Value.Conid, "OPT", option.Value.Month,
-                strike: strike!.Value.ToString(CultureInfo.InvariantCulture), right: "C");
+                strike: strike!.Value.ToString(CultureInfo.InvariantCulture), right: OptionRight.Call);
 
             info.Should().NotBeNull();
         }
