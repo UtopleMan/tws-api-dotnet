@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Configuration;
-using TwsApi.Rest;
+using RestApi;
 
 namespace TwsApi.Tests;
 

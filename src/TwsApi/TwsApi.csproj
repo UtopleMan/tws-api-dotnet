@@ -13,9 +13,9 @@
     <RepositoryType>git</RepositoryType>
     <PackageProjectUrl>https://github.com/UtopleMan/tws-api-dotnet</PackageProjectUrl>
 
-    <!-- The vendored IBKR client is not a NuGet package, so bundle its assembly (CSharpAPI.dll)
-         into this package's lib folder (see IncludeVendoredIbApi target below). -->
-    <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);IncludeVendoredIbApi</TargetsForTfmSpecificBuildOutput>
+    <!-- Neither the vendored IBKR client nor the RestApi project is a standalone NuGet package, so
+         bundle their assemblies into this package's lib folder (see IncludeBundledAssemblies below). -->
+    <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);IncludeBundledAssemblies</TargetsForTfmSpecificBuildOutput>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,7 +23,8 @@
          DependencyInjection.Abstractions (IServiceCollection, AddSingleton). -->
     <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />
-    <!-- IHttpClientFactory for AddIbkrRestClient (pooled HttpClient for the REST client). -->
+    <!-- IHttpClientFactory for the bundled RestApi client's AddIbkrRestClient. RestApi is referenced
+         PrivateAssets="all" (below), so declare its runtime deps here to flow through to consumers. -->
     <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0" />
     <!-- CSharpAPI.dll (bundled below) depends on Google.Protobuf. Declare it explicitly so it
          flows to consumers as a package dependency, since the CSharpAPI project reference itself
@@ -42,14 +43,25 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!--
+      The REST client lives in its own project (src/RestApi). Reference it PrivateAssets="all" - it
+      contributes no NuGet dependency of its own; its DLL is bundled below - so the TwsApi package
+      ships both the socket and REST clients from a single package.
+    -->
+    <ProjectReference Include="..\RestApi\RestApi.csproj" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Ship the repo README as the package readme shown on nuget.org. -->
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
-  <!-- Place the vendored IBKR assembly alongside TwsApi.dll in lib/<tfm>/. -->
-  <Target Name="IncludeVendoredIbApi">
+  <!-- Place the vendored IBKR and RestApi assemblies alongside TwsApi.dll in lib/<tfm>/. -->
+  <Target Name="IncludeBundledAssemblies">
     <ItemGroup>
       <BuildOutputInPackage Include="$(OutputPath)CSharpAPI.dll" />
+      <BuildOutputInPackage Include="$(OutputPath)RestApi.dll" />
+      <BuildOutputInPackage Include="$(OutputPath)RestApi.xml" Condition="Exists('$(OutputPath)RestApi.xml')" />
     </ItemGroup>
   </Target>
 

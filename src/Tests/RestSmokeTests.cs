@@ -3,7 +3,7 @@ using FluentAssertions;
 namespace TwsApi.Tests;
 
 /// <summary>
-/// Read-side smoke tests for the Client Portal Web API <see cref="TwsApi.Rest.IRestClient"/>,
+/// Read-side smoke tests for the Client Portal Web API <see cref="RestApi.IRestClient"/>,
 /// run against a real, logged-in gateway (see <see cref="CpGatewayFixture"/>). Every test skips
 /// gracefully when the gateway is unavailable or not authenticated.
 ///

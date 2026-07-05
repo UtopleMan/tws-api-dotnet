@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>RestApi</RootNamespace>
+    <AssemblyName>RestApi</AssemblyName>
+    <Description>Typed client for the IBKR Client Portal Web API (the REST/HTTPS gateway).</Description>
+    <!-- Bundled into the TwsApi package (see TwsApi.csproj), so it is not packaged on its own. -->
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- IHttpClientFactory for AddIbkrRestClient (pooled HttpClient); brings in DI + Abstractions. -->
+    <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0" />
+    <!-- Options plumbing for RestClientOptions used by AddIbkrRestClient. -->
+    <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.0" />
+  </ItemGroup>
+
+</Project>

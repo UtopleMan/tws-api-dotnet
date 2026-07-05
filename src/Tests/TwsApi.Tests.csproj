@@ -24,6 +24,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TwsApi\TwsApi.csproj" />
+    <!-- The REST client is its own project now, referenced PrivateAssets="all" by TwsApi (so it
+         doesn't flow transitively); reference it directly for the REST smoke tests. -->
+    <ProjectReference Include="..\RestApi\RestApi.csproj" />
     <!-- The tests use IBApi types (Contract, Order, ...) directly. TwsApi marks its CSharpAPI
          reference PrivateAssets="all" (so it isn't a NuGet dependency), so reference it here too. -->
     <ProjectReference Include="..\..\vendor\tws-api\source\csharpclient\client\CSharpAPI.csproj" />

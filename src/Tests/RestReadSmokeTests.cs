@@ -1,15 +1,15 @@
 using System.Globalization;
 using System.Net;
 using FluentAssertions;
-using TwsApi.Rest;
-using TwsApi.Rest.Portfolio;
-using TwsApi.Rest.PortfolioAnalyst;
-using TwsApi.Rest.Scanner;
+using RestApi;
+using RestApi.Portfolio;
+using RestApi.PortfolioAnalyst;
+using RestApi.Scanner;
 
 namespace TwsApi.Tests;
 
 /// <summary>
-/// Extended read-side smoke tests for the Client Portal Web API <see cref="TwsApi.Rest.IRestClient"/>,
+/// Extended read-side smoke tests for the Client Portal Web API <see cref="RestApi.IRestClient"/>,
 /// filling the gaps left by <see cref="RestSmokeTests"/> so every read endpoint of every sub-client
 /// is exercised at least once. Run against a real, logged-in gateway (see <see cref="CpGatewayFixture"/>);
 /// every test skips gracefully when the gateway is unavailable or not authenticated.
