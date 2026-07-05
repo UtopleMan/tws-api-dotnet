@@ -64,8 +64,8 @@ public interface IContractApi
     /// <param name="month">Contract month (MMMYY, e.g. <c>JAN00</c>); required for FUT/OPT/WAR.</param>
     /// <param name="exchange">Optional, defaults to SMART.</param>
     /// <param name="strike">Required for OPT/WAR.</param>
-    /// <param name="right">C for call, P for put.</param>
-    Task<IReadOnlyList<SecDefInfo>?> GetSecDefInfoAsync(long conid, string sectype, string? month = null, string? exchange = null, string? strike = null, string? right = null, CancellationToken cancellationToken = default);
+    /// <param name="right">Call or put; required for OPT/WAR.</param>
+    Task<IReadOnlyList<SecDefInfo>?> GetSecDefInfoAsync(long conid, string sectype, string? month = null, string? exchange = null, string? strike = null, OptionRight? right = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Return contract info for the given contract identifier, useful to prefill an order

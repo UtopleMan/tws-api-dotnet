@@ -24,7 +24,7 @@ public sealed class PortfolioApi : IPortfolioApi
         int pageId = 0,
         string? model = null,
         string? sort = null,
-        string? direction = null,
+        SortDirection? direction = null,
         string? period = null,
         CancellationToken cancellationToken = default) =>
         _transport.GetAsync<IReadOnlyList<Position>>(
@@ -32,7 +32,7 @@ public sealed class PortfolioApi : IPortfolioApi
             RestQuery.New()
                 .Add("model", model)
                 .Add("sort", sort)
-                .Add("direction", direction)
+                .Add("direction", direction?.ToApiValue())
                 .Add("period", period),
             cancellationToken);
 

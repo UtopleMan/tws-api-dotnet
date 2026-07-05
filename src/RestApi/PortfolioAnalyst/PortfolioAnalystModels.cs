@@ -16,8 +16,25 @@ public sealed record PerformanceRequest
     /// </summary>
     public string? Period { get; init; }
 
-    /// <summary>Frequency of cumulative performance data points: <c>D</c>aily, <c>M</c>onthly, <c>Q</c>uarterly.</summary>
-    public string? Freq { get; init; }
+    /// <summary>Frequency of cumulative performance data points.</summary>
+    public PerformanceFrequency? Freq { get; init; }
+}
+
+/// <summary>Frequency of cumulative performance data points (serialized as <c>D</c>/<c>M</c>/<c>Q</c>).</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<PerformanceFrequency>))]
+public enum PerformanceFrequency
+{
+    /// <summary>Daily (<c>D</c>).</summary>
+    [JsonStringEnumMemberName("D")]
+    Daily,
+
+    /// <summary>Monthly (<c>M</c>).</summary>
+    [JsonStringEnumMemberName("M")]
+    Monthly,
+
+    /// <summary>Quarterly (<c>Q</c>).</summary>
+    [JsonStringEnumMemberName("Q")]
+    Quarterly,
 }
 
 /// <summary>Request body for <c>POST /pa/summary</c>.</summary>

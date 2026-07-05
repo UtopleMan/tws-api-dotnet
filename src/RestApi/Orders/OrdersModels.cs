@@ -52,8 +52,8 @@ public sealed record OrderRequest
     /// <summary>Stop price for STOP_LIMIT orders; both <see cref="Price"/> and this must be specified.</summary>
     public double? AuxPrice { get; init; }
 
-    /// <summary><c>SELL</c> or <c>BUY</c>.</summary>
-    public string? Side { get; init; }
+    /// <summary>Order side — buy or sell.</summary>
+    public OrderSide? Side { get; init; }
 
     /// <summary>Underlying symbol for the contract.</summary>
     public string? Ticker { get; init; }
@@ -121,8 +121,8 @@ public sealed record ModifyOrderRequest
     /// <summary>New auxiliary (stop) price.</summary>
     public double? AuxPrice { get; init; }
 
-    /// <summary><c>SELL</c> or <c>BUY</c>.</summary>
-    public string? Side { get; init; }
+    /// <summary>Order side — buy or sell.</summary>
+    public OrderSide? Side { get; init; }
 
     /// <summary>Optional listing exchange.</summary>
     public string? ListingExchange { get; init; }
@@ -595,4 +595,17 @@ public sealed record SystemError
 {
     /// <summary>Error message.</summary>
     public string? Error { get; init; }
+}
+
+/// <summary>Side of an order to place or modify (serialized as <c>BUY</c>/<c>SELL</c>).</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<OrderSide>))]
+public enum OrderSide
+{
+    /// <summary>Buy (<c>BUY</c>).</summary>
+    [JsonStringEnumMemberName("BUY")]
+    Buy,
+
+    /// <summary>Sell (<c>SELL</c>).</summary>
+    [JsonStringEnumMemberName("SELL")]
+    Sell,
 }

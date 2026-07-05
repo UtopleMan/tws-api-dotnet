@@ -63,7 +63,7 @@ public sealed class ContractApi : IContractApi
             cancellationToken);
 
     /// <inheritdoc />
-    public Task<IReadOnlyList<SecDefInfo>?> GetSecDefInfoAsync(long conid, string sectype, string? month = null, string? exchange = null, string? strike = null, string? right = null, CancellationToken cancellationToken = default) =>
+    public Task<IReadOnlyList<SecDefInfo>?> GetSecDefInfoAsync(long conid, string sectype, string? month = null, string? exchange = null, string? strike = null, OptionRight? right = null, CancellationToken cancellationToken = default) =>
         _transport.GetAsync<IReadOnlyList<SecDefInfo>>(
             "iserver/secdef/info",
             RestQuery.New()
@@ -72,7 +72,7 @@ public sealed class ContractApi : IContractApi
                 .Add("month", month)
                 .Add("exchange", exchange)
                 .Add("strike", strike)
-                .Add("right", right),
+                .Add("right", right?.ToApiValue()),
             cancellationToken);
 
     /// <inheritdoc />

@@ -683,3 +683,25 @@ public sealed record ContractInfoAndRules
     /// <summary>Trading related rules for the contract and side.</summary>
     public ContractRule? Rules { get; init; }
 }
+
+/// <summary>Option/warrant right — call or put (sent as <c>C</c>/<c>P</c>).</summary>
+public enum OptionRight
+{
+    /// <summary>Call option (<c>C</c>).</summary>
+    Call,
+
+    /// <summary>Put option (<c>P</c>).</summary>
+    Put,
+}
+
+/// <summary>Wire-value mapping for <see cref="OptionRight"/>.</summary>
+internal static class OptionRightExtensions
+{
+    /// <summary>The IBKR query value (<c>C</c> or <c>P</c>).</summary>
+    public static string ToApiValue(this OptionRight right) => right switch
+    {
+        OptionRight.Call => "C",
+        OptionRight.Put => "P",
+        _ => throw new ArgumentOutOfRangeException(nameof(right), right, null),
+    };
+}
