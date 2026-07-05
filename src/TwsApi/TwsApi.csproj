@@ -23,6 +23,8 @@
          DependencyInjection.Abstractions (IServiceCollection, AddSingleton). -->
     <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />
+    <!-- IHttpClientFactory for AddIbkrRestClient (pooled HttpClient for the REST client). -->
+    <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0" />
     <!-- CSharpAPI.dll (bundled below) depends on Google.Protobuf. Declare it explicitly so it
          flows to consumers as a package dependency, since the CSharpAPI project reference itself
          is private (PrivateAssets="all") and contributes no NuGet dependency. -->

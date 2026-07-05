@@ -29,3 +29,69 @@ services:
       # host:container — container exposes 4004 for paper, 4003 for live.
       - "127.0.0.1:4002:4004"   # paper trading API
       - "127.0.0.1:5900:5900"   # VNC (only serves when VNC_SERVER_PASSWORD is set)
+
+  # IBKR Client Portal (Web API) Gateway — the REST/HTTPS API (/v1/api/...), built from
+  # our own image (docker/cpgateway) rather than a third-party one. This is SEPARATE from
+  # ib-gateway above: ib-gateway serves the TWS *socket* API, cpgateway serves the *REST*
+  # API (e.g. Portfolio Analyst /v1/api/pa/performance). They don't share a session.
+  #
+  # No login automation: authenticate via the browser SSO flow, then the session lasts ~24h.
+  #
+  #   docker compose up -d cpgateway
+  #   open https://localhost:5000            # accept the self-signed cert, log in (user/pass + 2FA)
+  #   curl -ks https://localhost:5000/v1/api/iserver/auth/status | jq   # {"authenticated": true, ...}
+  #
+  # IBKR only ships a rolling "latest" gateway zip, so rebuild to update:
+  #   docker compose build --no-cache cpgateway
+  # Tailscale sidecar owning the netns the cpgateway container runs in. Publishes the
+  # gateway on the tailnet as https://cpgateway.<tailnet>.ts.net via `tailscale serve`
+  # (config in docker/cpgateway/serve.json) — Tailscale terminates TLS with a real
+  # provisioned cert and proxies to the gateway's own HTTPS listener on 127.0.0.1:5000.
+  # Pattern mirrors ../vllm-setup/docker-compose.yml (ts-vllm).
+  ts-cpgateway:
+    image: tailscale/tailscale:latest
+    container_name: ts-cpgateway
+    restart: unless-stopped
+    hostname: ${TS_HOSTNAME:-cpgateway}
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      TS_AUTHKEY: ${TS_AUTHKEY:?TS_AUTHKEY required in .env}
+      TS_HOSTNAME: ${TS_HOSTNAME:-cpgateway}
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_SERVE_CONFIG: /config/serve.json
+      TS_USERSPACE: "false"
+    volumes:
+      - ts_cpgateway_state:/var/lib/tailscale
+      - ./docker/cpgateway/serve.json:/config/serve.json:ro
+    networks:
+      cpgateway_net:
+        aliases:
+          - cpgateway
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  cpgateway:
+    build: ./docker/cpgateway
+    image: twsapi/cpgateway:latest
+    container_name: cpgateway
+    restart: unless-stopped
+    # Runs in the ts-cpgateway sidecar's netns so its :5000 listener is what `tailscale
+    # serve` proxies to. It therefore can't declare its own ports/networks — egress and
+    # tailnet exposure both belong to ts-cpgateway.
+    network_mode: "service:ts-cpgateway"
+    depends_on:
+      - ts-cpgateway
+
+networks:
+  cpgateway_net:
+    driver: bridge
+
+volumes:
+  ts_cpgateway_state:
