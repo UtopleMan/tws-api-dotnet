@@ -30,8 +30,8 @@ services:
       - "127.0.0.1:4002:4004"   # paper trading API
       - "127.0.0.1:5900:5900"   # VNC (only serves when VNC_SERVER_PASSWORD is set)
 
-  # IBKR Client Portal (Web API) Gateway — the REST/HTTPS API (/v1/api/...), built from
-  # our own image (docker/cpgateway) rather than a third-party one. This is SEPARATE from
+  # IBKR Client Portal (Web API) Gateway — the REST/HTTPS API (/v1/api/...). Uses our own
+  # image ghcr.io/utopleman/cpgateway (built by the infrastructure repo). This is SEPARATE from
   # ib-gateway above: ib-gateway serves the TWS *socket* API, cpgateway serves the *REST*
   # API (e.g. Portfolio Analyst /v1/api/pa/performance). They don't share a session.
   #
@@ -41,8 +41,10 @@ services:
   #   open https://localhost:5000            # accept the self-signed cert, log in (user/pass + 2FA)
   #   curl -ks https://localhost:5000/v1/api/iserver/auth/status | jq   # {"authenticated": true, ...}
   #
-  # IBKR only ships a rolling "latest" gateway zip, so rebuild to update:
-  #   docker compose build --no-cache cpgateway
+  # The image is built & published by the infrastructure repo (docker/cpgateway +
+  # .github/workflows/cpgateway-image.yml), which rebuilds weekly for IBKR's rolling
+  # gateway zip. Pull to update:  docker compose pull cpgateway
+  # (Private GHCR package — run `docker login ghcr.io` first, or make it public.)
   # Tailscale sidecar owning the netns the cpgateway container runs in. Publishes the
   # gateway on the tailnet as https://cpgateway.<tailnet>.ts.net via `tailscale serve`
   # (config in docker/cpgateway/serve.json) — Tailscale terminates TLS with a real
@@ -78,8 +80,7 @@ services:
         max-file: "3"
 
   cpgateway:
-    build: ./docker/cpgateway
-    image: twsapi/cpgateway:latest
+    image: ghcr.io/utopleman/cpgateway:latest
     container_name: cpgateway
     restart: unless-stopped
     # Runs in the ts-cpgateway sidecar's netns so its :5000 listener is what `tailscale
