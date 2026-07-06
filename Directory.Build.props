@@ -10,7 +10,7 @@
     directory sits under vendor. (Path-based so it resolves at import time, before
     the importing .csproj body runs.)
   -->
-  <PropertyGroup Condition="!$(MSBuildProjectDirectory.Contains('vendor'))">
+  <PropertyGroup Condition="!$(MSBuildProjectDirectory.Contains('csharpclient'))">
     <TargetFramework>net10.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
