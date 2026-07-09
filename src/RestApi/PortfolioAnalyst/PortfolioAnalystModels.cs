@@ -122,6 +122,9 @@ public sealed record PerformanceData
     /// <summary>Each value is the price change percent of the corresponding date in the dates array.</summary>
     public IReadOnlyList<double>? Returns { get; init; }
 
+    /// <summary>Net asset value at each date; present on the NAV (<c>nav</c>) series.</summary>
+    public IReadOnlyList<double>? Navs { get; init; }
+
     /// <summary>End date.</summary>
     [JsonConverter(typeof(IbkrDateConverter))]
     public DateOnly? End { get; init; }
