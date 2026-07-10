@@ -2,6 +2,8 @@ using System.Net.Security;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using RestApi;
+using RestApi.Authentication;
+using RestApi.Authentication.Internal;
 
 // Placed in the Microsoft.Extensions.DependencyInjection namespace so AddIbkrRestClient is
 // discoverable wherever services are configured, matching the built-in Add* conventions.
@@ -38,6 +40,9 @@ public static class RestClientServiceCollectionExtensions
                 http.BaseAddress = RestClient.BuildApiRoot(options);
                 http.Timeout = options.Timeout;
             })
+            // Signs each request with OAuth 1.0a when configured; a no-op in gateway mode.
+            .AddHttpMessageHandler(static sp =>
+                CreateAuthHandler(sp.GetRequiredService<IOptions<RestClientOptions>>().Value))
             .ConfigurePrimaryHttpMessageHandler(static sp =>
             {
                 var options = sp.GetRequiredService<IOptions<RestClientOptions>>().Value;
@@ -102,6 +107,9 @@ public static class RestClientServiceCollectionExtensions
                 http.BaseAddress = RestClient.BuildApiRoot(options);
                 http.Timeout = options.Timeout;
             })
+            // Signs each request with OAuth 1.0a when configured; a no-op in gateway mode.
+            .AddHttpMessageHandler(sp =>
+                CreateAuthHandler(sp.GetRequiredService<IOptionsMonitor<RestClientOptions>>().Get(name)))
             .ConfigurePrimaryHttpMessageHandler(sp =>
             {
                 var options = sp.GetRequiredService<IOptionsMonitor<RestClientOptions>>().Get(name);
@@ -116,4 +124,11 @@ public static class RestClientServiceCollectionExtensions
         services.TryAddSingleton<IRestClientFactory, RestClientFactory>();
         return services;
     }
+
+    // Builds the per-request auth handler: an OAuth 1.0a signer when credentials are configured,
+    // otherwise a pass-through so gateway (session) mode is unaffected.
+    private static DelegatingHandler CreateAuthHandler(RestClientOptions options) =>
+        options.OAuth is null
+            ? new PassThroughHandler()
+            : new OAuth1aSigningHandler(options.OAuth, RestClient.BuildApiRoot(options));
 }

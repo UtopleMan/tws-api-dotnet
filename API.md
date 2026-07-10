@@ -120,11 +120,37 @@ browser SSO login, so no credentials are sent from code. Before REST calls succe
 keep the session alive by calling `Session.TickleAsync()` roughly once a minute. A
 non-success HTTP status throws `RestApiException` (`.StatusCode`, `.Body`, `.IsUnauthenticated`).
 
+**OAuth 1.0a (gateway-free).** Set `RestClientOptions.OAuth` to talk to IBKR's Web API host
+directly (e.g. `https://api.ibkr.com`) with no running gateway. Requests are then signed
+per-request with a live session token negotiated on first use (Diffie-Hellman + RSA-SHA256,
+then HMAC-SHA256). After construction, call `Session.InitializeBrokerageSessionAsync()` once to
+open the brokerage session, then tickle as usual.
+
+```csharp
+using RestApi;
+using RestApi.Authentication;
+
+using IRestClient rest = new RestClient(new RestClientOptions
+{
+    BaseAddress = new Uri("https://api.ibkr.com"),
+    AcceptAnyServerCertificate = false,
+    OAuth = OAuth1aOptions.FromPemFiles(
+        consumerKey: "MYCONSUMER",
+        accessToken: "…",
+        accessTokenSecret: "…",                 // base64, RSA-encrypted for you
+        signingKeyPemPath: "private_signature.pem",
+        encryptionKeyPemPath: "private_encryption.pem",
+        dhParamPemPath: "dhparam.pem"),
+});
+await rest.Session.InitializeBrokerageSessionAsync();
+// … the same DI helpers accept o.OAuth = … too.
+```
+
 ### Sub-client map
 
 | Property | Interface | Namespace | Endpoints |
 |---|---|---|---|
-| `Session` | `ISessionApi` | `RestApi.Session` | 5 |
+| `Session` | `ISessionApi` | `RestApi.Session` | 6 |
 | `Account` | `IAccountApi` | `RestApi.Account` | 10 |
 | `Contract` | `IContractApi` | `RestApi.Contract` | 11 |
 | `MarketData` | `IMarketDataApi` | `RestApi.MarketData` | 6 |
@@ -145,6 +171,7 @@ Example: `var status = await rest.Session.GetAuthStatusAsync();` /
 |---|---|---|
 | `Task<AuthStatus?> GetAuthStatusAsync()` | `POST /iserver/auth/status` | Brokerage auth status |
 | `Task<AuthStatus?> ReauthenticateAsync()` | `POST /iserver/reauthenticate` | Re-auth using the SSO session |
+| `Task<AuthStatus?> InitializeBrokerageSessionAsync()` | `POST /iserver/auth/ssodh/init` | Open the brokerage session (OAuth 1.0a) |
 | `Task<TickleResponse?> TickleAsync()` | `POST /tickle` | Keep-alive; returns streaming session token |
 | `Task<SsoValidation?> ValidateSsoAsync()` | `GET /sso/validate` | Validate the SSO session |
 | `Task<LogoutResult?> LogoutAsync()` | `POST /logout` | End the gateway session |

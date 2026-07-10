@@ -20,6 +20,16 @@ public interface ISessionApi
     Task<AuthStatus?> ReauthenticateAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Open the brokerage session over an OAuth 1.0a connection (<c>POST /iserver/auth/ssodh/init</c>).
+    /// Required after the live-session-token handshake before trading or market-data endpoints work;
+    /// not needed in gateway/session mode. Poll <see cref="GetAuthStatusAsync"/> afterwards.
+    /// </summary>
+    /// <param name="compete">Take over the brokerage session if the account is logged in elsewhere.</param>
+    /// <param name="publish">Publish the session to the backend (must be <c>true</c> to authenticate).</param>
+    Task<AuthStatus?> InitializeBrokerageSessionAsync(
+        bool compete = true, bool publish = true, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Keep the session alive (<c>POST /tickle</c>). Call periodically (roughly once a minute)
     /// to stop the gateway timing the session out; also returns the streaming session token.
     /// </summary>

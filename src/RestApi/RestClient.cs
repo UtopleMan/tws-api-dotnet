@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using RestApi.Account;
 using RestApi.Alerts;
+using RestApi.Authentication;
 using RestApi.Ccp;
 using RestApi.Contract;
 using RestApi.Fyi;
@@ -118,6 +119,13 @@ public sealed class RestClient : IRestClient
             {
                 SslOptions = { RemoteCertificateValidationCallback = static (_, _, _, _) => true },
             };
+        }
+
+        // In OAuth mode, sign every request in front of the transport handler. In gateway mode
+        // (OAuth is null) the handler chain is left as-is — the gateway holds the session.
+        if (options.OAuth is not null)
+        {
+            handler = new OAuth1aSigningHandler(options.OAuth, BuildApiRoot(options)) { InnerHandler = handler };
         }
 
         var http = new HttpClient(handler, disposeHandler: true)

@@ -1,3 +1,5 @@
+using RestApi.Authentication;
+
 namespace RestApi;
 
 /// <summary>
@@ -27,4 +29,13 @@ public sealed record RestClientOptions
     /// localhost setup. Set to <c>false</c> once you install a trusted certificate.
     /// </summary>
     public bool AcceptAnyServerCertificate { get; set; } = true;
+
+    /// <summary>
+    /// OAuth 1.0a credentials for authenticating directly against the Client Portal Web API without
+    /// a running gateway. Leave <c>null</c> (the default) for gateway/session mode, where the gateway
+    /// holds the authenticated session. When set, requests are signed per-request with a negotiated
+    /// live session token; point <see cref="BaseAddress"/> at IBKR's API host (e.g.
+    /// <c>https://api.ibkr.com</c>) and set <see cref="AcceptAnyServerCertificate"/> to <c>false</c>.
+    /// </summary>
+    public OAuth1aOptions? OAuth { get; set; }
 }

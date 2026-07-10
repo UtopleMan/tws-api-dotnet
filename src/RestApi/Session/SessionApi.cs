@@ -18,6 +18,12 @@ public sealed class SessionApi : ISessionApi
         _transport.PostAsync<AuthStatus>("iserver/reauthenticate", ct: cancellationToken);
 
     /// <inheritdoc />
+    public Task<AuthStatus?> InitializeBrokerageSessionAsync(
+        bool compete = true, bool publish = true, CancellationToken cancellationToken = default) =>
+        _transport.PostAsync<AuthStatus>(
+            "iserver/auth/ssodh/init", body: new { compete, publish }, ct: cancellationToken);
+
+    /// <inheritdoc />
     public Task<TickleResponse?> TickleAsync(CancellationToken cancellationToken = default) =>
         _transport.PostAsync<TickleResponse>("tickle", ct: cancellationToken);
 

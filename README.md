@@ -119,6 +119,107 @@ docker compose up -d      # API on 127.0.0.1:4002, optional VNC on :5900
 > **2FA must be disabled** on the paper login for headless (IBC) auto-login to succeed.
 > IBKR permits disabling 2FA for paper accounts.
 
+## REST client authentication
+
+The REST/Web API client (`RestApi.IRestClient`, over the IBKR **Client Portal Web API**) supports
+two authentication flows. Both expose the exact same typed surface — you only change how
+`RestClientOptions` is configured. See [API.md](API.md) for the full endpoint map.
+
+| | **Gateway (session)** | **OAuth 1.0a** |
+|---|---|---|
+| Runs | Client Portal Gateway (`docker/cpgateway`) | Gateway-free, direct to IBKR |
+| Base address | `https://localhost:5000` (default) | `https://api.ibkr.com` |
+| Login | Browser SSO, once per session | Signed requests, no browser |
+| Credentials in code | None | Consumer key, access token/secret, RSA + DH keys |
+| Best for | Interactive / desktop use | Headless services, automation |
+
+### Gateway (session)
+
+The default. The gateway holds the session established by a browser SSO login, so **no credentials
+are sent from code**. Before REST calls succeed you must (1) have the gateway running and (2) have
+logged in via browser at `https://localhost:5000`. Keep the session alive by calling
+`Session.TickleAsync()` roughly once a minute.
+
+```csharp
+using RestApi;
+
+using IRestClient rest = new RestClient(new RestClientOptions
+{
+    BaseAddress = new Uri("https://localhost:5000"),   // default; self-signed cert accepted by default
+});
+
+var status = await rest.Session.GetAuthStatusAsync();  // Authenticated == true once logged in
+```
+
+### OAuth 1.0a (gateway-free)
+
+Set `RestClientOptions.OAuth` to talk to IBKR's Web API host directly with **no running gateway**.
+On first use the client negotiates a live session token (Diffie-Hellman + RSA-SHA256), then signs
+every request with HMAC-SHA256 — all transparently. After construction, call
+`Session.InitializeBrokerageSessionAsync()` once to open the brokerage session, then tickle as usual.
+
+#### Setting up OAuth on IBKR's website
+
+OAuth is registered through IBKR's **self-service** portal. Log in with the account you want the API
+to act as at the OAuth login URL and append the OAuth action:
+
+> **Self-service portal:** <https://ndcdyn.interactivebrokers.com/sso/Login?action=OAUTH&RL=1&ip2loc=US>
+> (if that doesn't resolve for your region, open your local IBKR login page and append `&action=OAUTH`).
+> Reference: [IBKR Campus — OAuth 1.0a](https://www.interactivebrokers.com/campus/ibkr-api-page/oauth-1-0a-extended/).
+> This flow mirrors the one documented by [Voyz/ibind](https://github.com/Voyz/ibind/wiki/OAuth-1.0a).
+
+1. **Generate the key material** locally with OpenSSL — a signature key pair, an encryption key pair,
+   and a Diffie-Hellman prime:
+
+   ```bash
+   openssl genrsa -out private_signature.pem 2048
+   openssl rsa -in private_signature.pem -outform PEM -pubout -out public_signature.pem
+   openssl genrsa -out private_encryption.pem 2048
+   openssl rsa -in private_encryption.pem -outform PEM -pubout -out public_encryption.pem
+   openssl dhparam -out dhparam.pem 2048
+   ```
+
+2. **Choose a consumer key** — a 9-character identifier you pick (A–Z; alpha characters are
+   upper-cased). This is your `consumerKey`.
+3. **Upload the public material** to the portal: `public_signature.pem`, `public_encryption.pem`,
+   and `dhparam.pem`. Keep the two `private_*.pem` files secret — they never leave your machine.
+4. **Generate the access token** — the portal produces your **Access Token** and **Access Token
+   Secret**. Copy both immediately: the secret is shown only once and won't reappear on a later visit.
+
+The three files you keep map directly onto `OAuth1aOptions.FromPemFiles`:
+`private_signature.pem` → `signingKeyPemPath`, `private_encryption.pem` → `encryptionKeyPemPath`,
+`dhparam.pem` → `dhParamPemPath`.
+
+> **Activation delay:** newly registered consumer keys aren't live immediately — IBKR activates them
+> on a weekend server restart, so it can take up to a few days before the handshake succeeds.
+
+Supply the material issued during IBKR OAuth self-registration (consumer key, access token/secret,
+the signing and encryption RSA keys, and the DH prime):
+
+```csharp
+using RestApi;
+using RestApi.Authentication;
+
+using IRestClient rest = new RestClient(new RestClientOptions
+{
+    BaseAddress = new Uri("https://api.ibkr.com"),
+    AcceptAnyServerCertificate = false,                // IBKR's cert is trusted
+    OAuth = OAuth1aOptions.FromPemFiles(
+        consumerKey: "MYCONSUMER",
+        accessToken: "…",
+        accessTokenSecret: "…",                        // base64, RSA-encrypted for you
+        signingKeyPemPath: "private_signature.pem",
+        encryptionKeyPemPath: "private_encryption.pem",
+        dhParamPemPath: "dhparam.pem"),
+});
+
+await rest.Session.InitializeBrokerageSessionAsync();  // required before trading / market data
+var status = await rest.Session.GetAuthStatusAsync();
+```
+
+Both flows also work through DI — set `o.OAuth = …` inside `AddRestApi(o => …)` / `AddIbkrRestClient(o => …)`.
+Use `test_realm` for IBKR's `TESTCONS` test consumer; the default realm is `limited_poa`.
+
 ## Tests
 
 Unit tests always run. Gateway integration tests require paper credentials and Docker; without
