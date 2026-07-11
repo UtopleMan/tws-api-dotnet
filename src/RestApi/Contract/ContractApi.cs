@@ -1,3 +1,4 @@
+using System.Text.Json;
 using RestApi.Internal;
 
 namespace RestApi.Contract;
@@ -45,11 +46,26 @@ public sealed class ContractApi : IContractApi
             cancellationToken);
 
     /// <inheritdoc />
-    public Task<IReadOnlyList<SecDefSearchResult>?> SearchSecDefAsync(string symbol, bool? name = null, string? secType = null, CancellationToken cancellationToken = default) =>
-        _transport.PostAsync<IReadOnlyList<SecDefSearchResult>>(
-            "iserver/secdef/search",
-            body: new SecDefSearchRequest { Symbol = symbol, Name = name, SecType = secType },
-            ct: cancellationToken);
+    public async Task<IReadOnlyList<SecDefSearchResult>?> SearchSecDefAsync(string symbol, bool? name = null, string? secType = null, CancellationToken cancellationToken = default)
+    {
+        // A recognized underlying returns an array of results, but for a symbol the gateway cannot
+        // resolve it replies with an object-shaped error/empty envelope (e.g. { "error": ... })
+        // rather than []. Read the body tolerantly so a non-array payload yields no results instead
+        // of a deserialization failure every caller would otherwise have to catch.
+        var body = await _transport
+            .PostAsync<JsonElement>(
+                "iserver/secdef/search",
+                body: new SecDefSearchRequest { Symbol = symbol, Name = name, SecType = secType },
+                ct: cancellationToken)
+            .ConfigureAwait(false);
+
+        if (body.ValueKind != JsonValueKind.Array)
+        {
+            return [];
+        }
+
+        return body.Deserialize<IReadOnlyList<SecDefSearchResult>>(_transport.Json) ?? [];
+    }
 
     /// <inheritdoc />
     public Task<StrikesResult?> GetStrikesAsync(long conid, string sectype, string month, string? exchange = null, CancellationToken cancellationToken = default) =>
